@@ -1,5 +1,33 @@
 import { Page, Text, Document, StyleSheet, View, Image } from '@react-pdf/renderer';
-import { Question } from '../types';
+
+// Define necessary interfaces
+interface Question {
+  id?: string;
+  question: string;
+  type: 'text' | 'multichoice' | 'truefalse' | 'image';
+  options?: string[];
+  correct_answer?: string;
+  is_active: boolean;
+  image_url?: string;
+}
+
+interface Category {
+  categoryName: string;
+  questions: Question[];
+}
+
+interface QuestionPDFProps {
+  title: string;
+  categorizedQuestions: Category[];
+  includeAnswers?: boolean;
+}
+
+interface TextSegment {
+  text: string;
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+}
 
 const styles = StyleSheet.create({
   page: {
@@ -116,17 +144,16 @@ const styles = StyleSheet.create({
   },
 });
 
-// Simple HTML parser that handles basic formatting tags
-const parseHtml = (html: string) => {
-  const segments: Array<{ text: string; bold?: boolean; italic?: boolean; underline?: boolean }> = [];
-  let currentText = '';
-  let currentSegment = { text: '', bold: false, italic: false, underline: false };
+// HTML parser for handling basic formatting tags
+const parseHtml = (html: string): TextSegment[] => {
+  const segments: TextSegment[] = [];
+  let currentSegment: TextSegment = { text: '', bold: false, italic: false, underline: false };
   
   // Helper to push current segment
   const pushSegment = () => {
     if (currentSegment.text) {
       segments.push({ ...currentSegment });
-      currentSegment.text = '';
+      currentSegment = { text: '', bold: false, italic: false, underline: false };
     }
   };
 
@@ -179,11 +206,11 @@ const QuestionText = ({ html }: { html: string }) => {
   return (
     <Text style={styles.questionText}>
       {segments.map((segment, index) => {
-        const textStyles = [
-          segment.bold && styles.bold,
-          segment.italic && styles.italic,
-          segment.underline && styles.underline,
-        ].filter(Boolean);
+        const textStyles = {
+          ...(segment.bold && styles.bold),
+          ...(segment.italic && styles.italic),
+          ...(segment.underline && styles.underline),
+        };
 
         return (
           <Text key={index} style={textStyles}>
@@ -205,10 +232,10 @@ export const QuestionPDF = ({
     <Page size="A4" style={styles.page}>
       <Text style={styles.title}>{title}</Text>
 
-      {categorizedQuestions.map((category, categoryIndex) => (
+      {categorizedQuestions.map((category: Category, categoryIndex: number) => (
         <View key={categoryIndex}>
           <Text style={styles.categoryTitle}>{category.categoryName}</Text>
-          {category.questions.map((question, index) => (
+          {category.questions.map((question: Question, index: number) => (
             <View key={`${categoryIndex}-${index}`} style={styles.questionContainer} wrap={false}>
               {!question.is_active && (
                 <Text style={styles.questionStatus}>(Inactive Question)</Text>
@@ -234,7 +261,7 @@ export const QuestionPDF = ({
 
               {question.type === 'multichoice' && question.options && (
                 <View style={styles.options}>
-                  {question.options.map((option, optIndex) => (
+                  {question.options.map((option: string, optIndex: number) => (
                     <Text key={optIndex} style={styles.option}>
                       {String.fromCharCode(97 + optIndex)}. {option}
                     </Text>
@@ -262,11 +289,11 @@ export const QuestionPDF = ({
     {includeAnswers && categorizedQuestions.length > 0 && (
       <Page size="A4" style={styles.page}>
         <Text style={styles.answerTitle}>Answer Key</Text>
-        {categorizedQuestions.map((category, categoryIndex) => (
+        {categorizedQuestions.map((category: Category, categoryIndex: number) => (
           <View key={`answers-${categoryIndex}`} style={styles.categoryAnswers}>
             <Text style={styles.categoryAnswerTitle}>{category.categoryName}</Text>
             <View style={styles.answerKey}>
-              {category.questions.map((question, index) => (
+              {category.questions.map((question: Question, index: number) => (
                 <Text key={`${categoryIndex}-${index}`} style={styles.answer}>
                   {index + 1}. {question.correct_answer}
                   {!question.is_active ? ' (Inactive)' : ''}
