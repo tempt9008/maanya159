@@ -244,7 +244,7 @@ export const QuestionPDF = ({
         <View key={categoryIndex}>
           <Text style={styles.categoryTitle}>{category.categoryName}</Text>
           {category.questions.map((question: Question, index: number) => (
-            <View key={`${categoryIndex}-${index}`} style={styles.questionContainer} wrap={false}>
+            <View key={`${categoryIndex}-${index}`} style={styles.questionContainer}>
               {!question.is_active && (
                 <Text style={styles.questionStatus}>(Inactive Question)</Text>
               )}
