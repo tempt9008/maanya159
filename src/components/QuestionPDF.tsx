@@ -58,6 +58,14 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     fontFamily: 'Helvetica',
     lineHeight: 1.4,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  questionNumber: {
+    marginRight: 4,
+  },
+  questionContent: {
+    flex: 1,
   },
   questionParagraph: {
     marginBottom: 4,
@@ -204,7 +212,7 @@ const QuestionText = ({ html }: { html: string }) => {
   const segments = parseHtml(html);
   
   return (
-    <Text style={styles.questionText}>
+    <Text>
       {segments.map((segment, index) => {
         const textStyles = {
           ...(segment.bold && styles.bold),
@@ -241,8 +249,10 @@ export const QuestionPDF = ({
                 <Text style={styles.questionStatus}>(Inactive Question)</Text>
               )}
               <View style={styles.questionText}>
-                <Text>{index + 1}. </Text>
-                <QuestionText html={question.question} />
+                <Text style={styles.questionNumber}>{index + 1}. </Text>
+                <Text style={styles.questionContent}>
+                  <QuestionText html={question.question} />
+                </Text>
               </View>
 
               {question.type === 'image' && question.image_url && (
