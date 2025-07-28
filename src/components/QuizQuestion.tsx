@@ -82,9 +82,12 @@ export default function QuizQuestion({
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <div className="p-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-4">
-          {question.question}
-        </h3>
+        {/* Use dangerouslySetInnerHTML to render HTML from the WYSIWYG editor */}
+        <h3 
+          className="text-xl font-semibold text-gray-900 mb-4"
+          dangerouslySetInnerHTML={{ __html: question.question }} 
+        />
+        {/* Removed direct rendering: {question.question} */}
 
         {question.image_url && (
           <img

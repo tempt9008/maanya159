@@ -29,6 +29,7 @@ export default function CategorySelector({ onSelect }: CategorySelectorProps) {
       const { data, error } = await supabase
         .from('folders')
         .select('*')
+        .eq('is_enabled', true) // Filter enabled folders
         .order('created_at');
 
       if (error) throw error;
@@ -47,6 +48,7 @@ export default function CategorySelector({ onSelect }: CategorySelectorProps) {
         .from('categories')
         .select('*')
         .eq('folder_id', folderId)
+        .eq('is_enabled', true) // Filter enabled categories
         .order('created_at');
 
       if (error) throw error;

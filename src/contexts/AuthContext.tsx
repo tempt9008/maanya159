@@ -10,9 +10,15 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD;
+
+  if (!adminPassword) {
+    console.error("Admin password not set in .env file");
+  }
 
   const login = (password: string) => {
-    if (password === '12345') {
+    // Use environment variable for admin password, fallback to default if not set
+    if (password === (adminPassword || '')) {
       setIsAuthenticated(true);
       return true;
     }

@@ -1,4 +1,7 @@
-import { Page, Text, Document, StyleSheet, View, Image } from '@react-pdf/renderer';
+import { Page, Text, Document, StyleSheet, View, Image } from '@react-pdf/renderer'; // Removed Font import
+import Html from 'react-pdf-html'; // Import the Html component
+
+// --- Removed Font Registration ---
 
 // Define necessary interfaces
 interface Question {
@@ -22,24 +25,82 @@ interface QuestionPDFProps {
   includeAnswers?: boolean;
 }
 
-interface TextSegment {
-  text: string;
-  bold?: boolean;
-  italic?: boolean;
-  underline?: boolean;
-}
-
+// Removed leftover TextSegment interface
 const styles = StyleSheet.create({
+  // Add base style for Html component if needed, or rely on inherited styles
+  html: {
+    fontFamily: 'Helvetica', // Reverted to standard name
+    fontSize: 12,          // Base font size for HTML content
+    lineHeight: 1.4,
+  },
+  // Add specific styles for HTML tags
+  p: {
+    marginBottom: 5,
+    marginTop: 5,
+  },
+  strong: {
+    fontFamily: 'Helvetica-Bold', // Reverted to standard name
+  },
+  b: {
+    fontFamily: 'Helvetica-Bold', // Reverted to standard name
+  },
+  em: {
+    fontFamily: 'Helvetica-Oblique', // Reverted to standard name
+  },
+  i: {
+    fontFamily: 'Helvetica-Oblique', // Reverted to standard name
+  },
+  u: {
+    textDecoration: 'underline',
+  },
+  h1: {
+    fontFamily: 'Helvetica-Bold', // Reverted to standard name
+    fontSize: 18,
+    marginBottom: 8,
+    marginTop: 10,
+  },
+  h2: {
+    fontFamily: 'Helvetica-Bold', // Reverted to standard name
+    fontSize: 16,
+    marginBottom: 6,
+    marginTop: 8,
+  },
+  ul: {
+    marginTop: 5,
+    marginBottom: 5,
+    marginLeft: 10, // Indentation for lists
+  },
+  ol: {
+    marginTop: 5,
+    marginBottom: 5,
+    marginLeft: 10, // Indentation for lists
+  },
+  li: {
+    marginBottom: 3,
+    // Note: react-pdf-html might handle list markers automatically or require custom rendering
+  },
+  blockquote: {
+    fontFamily: 'Helvetica-Oblique', // Reverted to standard name
+    marginLeft: 10,
+    paddingLeft: 10,
+    borderLeftWidth: 2,
+    borderLeftColor: '#cccccc',
+    color: '#555555',
+    marginTop: 5,
+    marginBottom: 5,
+  },
+  // Add other tags as needed (e.g., pre, code)
+
   page: {
     padding: 20,
-    fontSize: 15,
-    fontFamily: 'Helvetica',
+    fontSize: 15, // Default page font size, can be overridden by html styles
+    fontFamily: 'Helvetica', // Reverted to standard name
   },
   title: {
     fontSize: 18,
     marginBottom: 20,
     textAlign: 'center',
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Helvetica-Bold', // Reverted to standard name
   },
   categoryTitle: {
     fontSize: 16,
@@ -47,43 +108,35 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     backgroundColor: '#f0f0f0',
     padding: 8,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Helvetica-Bold', // Reverted to standard name
   },
   questionContainer: {
     marginBottom: 5,
     breakInside: 'avoid',
   },
   questionText: {
-    fontSize: 14,
+    // fontSize: 14, // Font size now controlled by styles.html or specific tag styles
     marginBottom: 5,
-    fontFamily: 'Helvetica',
-    lineHeight: 1.4,
+    // fontFamily: 'Helvetica', // Font family now controlled by styles.html or specific tag styles
+    // lineHeight: 1.4, // Line height now controlled by styles.html or specific tag styles
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
   questionNumber: {
     marginRight: 4,
+    fontSize: 12, // Match base HTML font size
+    fontFamily: 'Helvetica', // Reverted to standard name
+    lineHeight: 1.4,
   },
   questionContent: {
     flex: 1,
-  },
-  questionParagraph: {
-    marginBottom: 4,
-  },
-  bold: {
-    fontFamily: 'Helvetica-Bold',
-  },
-  italic: {
-    fontFamily: 'Helvetica-Oblique',
-  },
-  underline: {
-    textDecoration: 'underline',
+    // Removed questionParagraph as Html component handles paragraphs
   },
   questionStatus: {
     fontSize: 10,
     marginBottom: 5,
     color: '#666666',
-    fontFamily: 'Helvetica',
+    fontFamily: 'Helvetica', // Reverted to standard name
   },
   imageContainer: {
     marginBottom: 5,
@@ -103,7 +156,7 @@ const styles = StyleSheet.create({
     marginBottom: 3,
     fontSize: 12,
     lineHeight: 1.3,
-    fontFamily: 'Helvetica',
+    fontFamily: 'Helvetica', // Reverted to standard name
   },
   answerSection: {
     marginTop: 30,
@@ -114,7 +167,7 @@ const styles = StyleSheet.create({
   answerTitle: {
     fontSize: 16,
     marginBottom: 15,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Helvetica-Bold', // Reverted to standard name
     textAlign: 'center',
   },
   categoryAnswers: {
@@ -124,9 +177,9 @@ const styles = StyleSheet.create({
   },
   categoryAnswerTitle: {
     fontSize: 14,
-    fontWeight: 'bold',
+    // fontWeight: 'bold', // react-pdf uses fontFamily for bold
     marginBottom: 8,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Helvetica-Bold', // Reverted to standard name
     backgroundColor: '#f5f5f5',
     padding: 5,
   },
@@ -140,7 +193,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontSize: 11,
     lineHeight: 1.4,
-    fontFamily: 'Helvetica',
+    fontFamily: 'Helvetica', // Reverted to standard name
     padding: 2,
   },
   answerLine: {
@@ -152,88 +205,12 @@ const styles = StyleSheet.create({
   },
 });
 
-// HTML parser for handling basic formatting tags
-const parseHtml = (html: string): TextSegment[] => {
-  const segments: TextSegment[] = [];
-  let currentSegment: TextSegment = { text: '', bold: false, italic: false, underline: false };
-  
-  // Helper to push current segment
-  const pushSegment = () => {
-    if (currentSegment.text) {
-      segments.push({ ...currentSegment });
-      currentSegment = { text: '', bold: false, italic: false, underline: false };
-    }
-  };
+// Removed the custom parseHtml function and QuestionText component
 
-  let i = 0;
-  while (i < html.length) {
-    if (html[i] === '<') {
-      pushSegment();
-      
-      if (html.startsWith('<p>', i)) {
-        if (segments.length > 0) {
-          segments.push({ text: '\n' });
-        }
-        i += 3;
-      } else if (html.startsWith('</p>', i)) {
-        i += 4;
-      } else if (html.startsWith('<strong>', i)) {
-        currentSegment.bold = true;
-        i += 8;
-      } else if (html.startsWith('</strong>', i)) {
-        currentSegment.bold = false;
-        i += 9;
-      } else if (html.startsWith('<em>', i)) {
-        currentSegment.italic = true;
-        i += 4;
-      } else if (html.startsWith('</em>', i)) {
-        currentSegment.italic = false;
-        i += 5;
-      } else if (html.startsWith('<u>', i)) {
-        currentSegment.underline = true;
-        i += 3;
-      } else if (html.startsWith('</u>', i)) {
-        currentSegment.underline = false;
-        i += 4;
-      } else {
-        i++;
-      }
-    } else {
-      currentSegment.text += html[i];
-      i++;
-    }
-  }
-  
-  pushSegment();
-  return segments;
-};
-
-const QuestionText = ({ html }: { html: string }) => {
-  const segments = parseHtml(html);
-  
-  return (
-    <Text>
-      {segments.map((segment, index) => {
-        const textStyles = {
-          ...(segment.bold && styles.bold),
-          ...(segment.italic && styles.italic),
-          ...(segment.underline && styles.underline),
-        };
-
-        return (
-          <Text key={index} style={textStyles}>
-            {segment.text}
-          </Text>
-        );
-      })}
-    </Text>
-  );
-};
-
-export const QuestionPDF = ({ 
-  title, 
+export const QuestionPDF = ({
+  title,
   categorizedQuestions,
-  includeAnswers = true 
+  includeAnswers = true
 }: QuestionPDFProps) => (
   <Document>
     {/* Questions Page */}
@@ -250,9 +227,13 @@ export const QuestionPDF = ({
               )}
               <View style={styles.questionText}>
                 <Text style={styles.questionNumber}>{index + 1}. </Text>
-                <Text style={styles.questionContent}>
-                  <QuestionText html={question.question} />
-                </Text>
+                {/* Use the Html component to render question content */}
+                <View style={styles.questionContent}>
+                  {/* Pass the extended stylesheet to the Html component */}
+                  <Html stylesheet={styles} style={styles.html}>
+                    {question.question}
+                  </Html>
+                </View>
               </View>
 
               {question.type === 'image' && question.image_url && (
@@ -260,7 +241,7 @@ export const QuestionPDF = ({
                   <Image
                     src={question.image_url}
                     style={styles.questionImage}
-                    cache={false}
+                    cache={false} // Consider setting cache={true} if images don't change often
                   />
                 </View>
               )}

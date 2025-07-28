@@ -5,13 +5,15 @@ import { FolderPlus } from 'lucide-react';
 interface CreateFolderDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreateFolder: (name: string) => void;
+  onCreateFolder: (name: string, parentFolderId?: string | null) => void; // Update signature
+  parentFolderId?: string | null; // Add parentFolderId prop
 }
 
 export function CreateFolderDialog({
   isOpen,
   onClose,
   onCreateFolder,
+  parentFolderId, // Destructure parentFolderId
 }: CreateFolderDialogProps) {
   const [folderName, setFolderName] = useState('');
   const cancelButtonRef = useRef(null);
@@ -19,7 +21,7 @@ export function CreateFolderDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (folderName.trim()) {
-      onCreateFolder(folderName.trim());
+      onCreateFolder(folderName.trim(), parentFolderId); // Pass parentFolderId
       setFolderName('');
       onClose();
     }

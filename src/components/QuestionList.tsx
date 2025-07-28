@@ -227,9 +227,11 @@ export default function QuestionList({ categoryId }: QuestionListProps) {
                 <div>
                   <h4 className={`text-base font-medium ${
                     question.is_active ? 'text-gray-900' : 'text-gray-500'
-                  }`}>
-                    {question.question}
-                  </h4>
+                  }`}
+                  // Use dangerouslySetInnerHTML to render HTML from the WYSIWYG editor
+                  dangerouslySetInnerHTML={{ __html: question.question }} 
+                  />
+                  {/* Removed the direct rendering: {question.question} */}
                   <p className="mt-1 text-sm text-gray-500">
                     Type: {question.type} | Answer: {question.correct_answer}
                   </p>

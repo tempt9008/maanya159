@@ -1,13 +1,10 @@
 import { Fragment, useRef, useState, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { HelpCircle, Bold as BoldIcon, Italic as ItalicIcon, Underline as UnderlineIcon } from 'lucide-react';
+import { HelpCircle } from 'lucide-react';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css'; // Import Quill styles
 import { Question } from '../types';
 import toast from 'react-hot-toast';
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import UnderlineExtension from '@tiptap/extension-underline';
-import BoldExtension from '@tiptap/extension-bold';
-import ItalicExtension from '@tiptap/extension-italic';
 
 interface QuestionDialogProps {
   isOpen: boolean;
@@ -17,38 +14,6 @@ interface QuestionDialogProps {
   question?: Question | null;
 }
 
-const MenuBar = ({ editor }: { editor: any }) => {
-  if (!editor) {
-    return null;
-  }
-
-  return (
-    <div className="border-b border-gray-200 p-2 space-x-2">
-      <button
-        onClick={() => editor.chain().focus().toggleBold().run()}
-        className={`p-1 rounded ${editor.isActive('bold') ? 'bg-gray-200' : ''}`}
-        title="Bold"
-      >
-        <BoldIcon className="h-4 w-4" />
-      </button>
-      <button
-        onClick={() => editor.chain().focus().toggleItalic().run()}
-        className={`p-1 rounded ${editor.isActive('italic') ? 'bg-gray-200' : ''}`}
-        title="Italic"
-      >
-        <ItalicIcon className="h-4 w-4" />
-      </button>
-      <button
-        onClick={() => editor.chain().focus().toggleUnderline().run()}
-        className={`p-1 rounded ${editor.isActive('underline') ? 'bg-gray-200' : ''}`}
-        title="Underline"
-      >
-        <UnderlineIcon className="h-4 w-4" />
-      </button>
-    </div>
-  );
-};
-
 export function QuestionDialog({
   isOpen,
   onClose,
@@ -57,45 +22,44 @@ export function QuestionDialog({
   question,
 }: QuestionDialogProps) {
   const [type, setType] = useState<Question['type']>('text');
+  const [questionText, setQuestionText] = useState(''); // State for Quill content
   const [correctAnswer, setCorrectAnswer] = useState('');
   const [options, setOptions] = useState<string[]>(['', '', '', '']);
   const [imageUrl, setImageUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const cancelButtonRef = useRef(null);
 
-  const editor = useEditor({
-    extensions: [StarterKit, UnderlineExtension, BoldExtension, ItalicExtension],
-    content: '',
-    editorProps: {
-      attributes: {
-        class: 'prose prose-sm focus:outline-none min-h-[100px] px-3 py-2',
-      },
-    },
-  });
-
   useEffect(() => {
-    if (mode === 'edit' && question && editor) {
-      setType(question.type);
-      editor.commands.setContent(question.question);
-      setCorrectAnswer(question.correct_answer);
-      setOptions(question.options || ['', '', '', '']);
-      setImageUrl(question.image_url || '');
-    } else if (editor) {
-      resetForm();
+    if (isOpen) { // Reset or populate form when dialog opens
+      if (mode === 'edit' && question) {
+        setType(question.type);
+        setQuestionText(question.question); // Set Quill content
+        setCorrectAnswer(question.correct_answer);
+        setOptions(question.options || ['', '', '', '']);
+        setImageUrl(question.image_url || '');
+      } else {
+        resetForm();
+      }
     }
-  }, [mode, question, isOpen, editor]);
+  }, [mode, question, isOpen]); // Depend on isOpen
 
   const resetForm = () => {
     setType('text');
-    editor?.commands.setContent('');
+    setQuestionText(''); // Reset Quill content
     setCorrectAnswer('');
     setOptions(['', '', '', '']);
     setImageUrl('');
-    setIsSubmitting(false);
+    // No need to reset isSubmitting here, handled in handleSubmit finally block
   };
 
+  // Helper to strip HTML for validation
+  const stripHtml = (html: string) => {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return doc.body.textContent || "";
+  }
+
   const validateForm = (): boolean => {
-    if (!editor?.getText().trim()) {
+    if (!stripHtml(questionText).trim()) { // Validate based on Quill content
       toast.error('Question text is required');
       return false;
     }
@@ -142,7 +106,7 @@ export function QuestionDialog({
       setIsSubmitting(true);
       const questionData: Partial<Question> = {
         type,
-        question: editor?.getHTML() || '',
+        question: questionText, // Use Quill content
         correct_answer: correctAnswer.trim(),
         options: type === 'multichoice' ? options.filter(opt => opt.trim()) : undefined,
         image_url: type === 'image' ? imageUrl.trim() : undefined,
@@ -226,10 +190,22 @@ export function QuestionDialog({
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                               Question Text
                             </label>
-                            <div className="border rounded-lg overflow-hidden">
-                              <MenuBar editor={editor} />
-                              <EditorContent editor={editor} />
-                            </div>
+                            {/* Replace EditorContent with ReactQuill */}
+                            <ReactQuill
+                              theme="snow"
+                              value={questionText}
+                              onChange={setQuestionText}
+                              className="mt-1 bg-white" // Added bg-white for better visibility in dark mode if applicable
+                              modules={{
+                                toolbar: [
+                                  [{ 'header': [1, 2, false] }],
+                                  ['bold', 'italic', 'underline','strike', 'blockquote'],
+                                  [{'list': 'ordered'}, {'list': 'bullet'}, {'indent': '-1'}, {'indent': '+1'}],
+                                  ['link', 'image'], // Add image button if needed
+                                  ['clean']
+                                ],
+                              }}
+                            />
                           </div>
 
                           {type === 'image' && (

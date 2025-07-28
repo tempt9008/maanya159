@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Layout, Pencil, Plus, Trash2, FolderOpen } from 'lucide-react';
+import { Layout, Pencil, Plus, Trash2, FolderOpen, Power } from 'lucide-react'; // Added Power icon
 import { supabase } from '../lib/supabase';
 import { Category, Question } from '../types';
 import { CreateCategoryDialog } from './CreateCategoryDialog';
@@ -163,6 +163,26 @@ export default function CategoryList() {
     }
   };
 
+  const handleToggleCategoryEnabled = async (category: Category) => {
+    const newEnabledState = !category.is_enabled;
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .update({ is_enabled: newEnabledState })
+        .eq('id', category.id);
+
+      if (error) throw error;
+
+      setCategories(categories.map(c =>
+        c.id === category.id ? { ...c, is_enabled: newEnabledState } : c
+      ));
+      toast.success(`Category ${newEnabledState ? 'enabled' : 'disabled'}`);
+    } catch (error) {
+      toast.error(`Error ${newEnabledState ? 'enabling' : 'disabling'} category`);
+      console.error('Error:', error);
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent, id: string) => {
     if (e.key === 'Enter') {
       handleUpdateCategoryName(id);
@@ -200,7 +220,7 @@ export default function CategoryList() {
         {categories.map((category) => (
           <div
             key={category.id}
-            className="group bg-white rounded-lg shadow-sm border border-gray-200"
+            className={`group bg-white rounded-lg shadow-sm border border-gray-200 ${!category.is_enabled ? 'opacity-60 bg-gray-50' : ''}`} // Added conditional styling
           >
             <div
               className="p-6 cursor-pointer"
@@ -226,12 +246,12 @@ export default function CategoryList() {
                         onClick={(e) => e.stopPropagation()}
                       />
                     ) : (
-                      <h3 className="text-lg font-medium text-gray-900">
+                      <h3 className={`text-lg font-medium ${category.is_enabled ? 'text-gray-900' : 'text-gray-500'}`}> {/* Conditional text color */}
                         {category.name}
                       </h3>
                     )}
                     <p className="text-sm text-gray-500">
-                      {new Date(category.created_at).toLocaleDateString()}
+                      {new Date(category.created_at).toLocaleDateString()} {category.is_enabled ? '' : '(Disabled)'} {/* Added disabled indicator */}
                     </p>
                   </div>
                 </div>
@@ -245,7 +265,8 @@ export default function CategoryList() {
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
-                  {categoryQuestions[category.id]?.length > 0 && (
+                  {/* Conditionally render PDF button only if category is enabled and has questions */}
+                  {category.is_enabled && categoryQuestions[category.id]?.length > 0 && (
                     <PDFDownloadButton
                       title={`${category.name} Questions`}
                       questions={categoryQuestions[category.id]}
@@ -260,6 +281,17 @@ export default function CategoryList() {
                     className="p-2 text-gray-500 hover:text-red-600 hover:bg-gray-100 rounded-full transition-colors opacity-0 group-hover:opacity-100"
                   >
                     <Trash2 className="h-5 w-5" />
+                  </button>
+                  {/* Toggle Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleCategoryEnabled(category);
+                    }}
+                    className={`p-2 opacity-0 group-hover:opacity-100 hover:bg-gray-100 rounded-full transition-opacity ${category.is_enabled ? 'text-green-600 hover:text-green-700' : 'text-red-600 hover:text-red-700'}`}
+                    title={category.is_enabled ? 'Disable Category' : 'Enable Category'}
+                  >
+                    <Power className="h-5 w-5" />
                   </button>
                 </div>
               </div>
